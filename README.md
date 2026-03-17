@@ -174,8 +174,13 @@ void initState() {
 # 1. Bump version in pubspec.yaml
 #    example: 1.0.0+1 → 1.0.1+2
 
-# 2. Push
-git pull --rebase && git add . && git commit -m "update" && git push origin main
+# 2. Stage and Commit your changes First!
+git add .
+git commit -m "chore: bump version for update"
+
+# 3. Pull latest changes (if any) and push to trigger GitHub Actions
+git pull --rebase
+git push origin main
 ```
 
 ---
