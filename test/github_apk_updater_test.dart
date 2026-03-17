@@ -3,10 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:github_apk_updater/github_apk_updater.dart';
 
 void main() {
-  test('adds one to input values', () {
-    final calculator = Calculator();
-    expect(calculator.addOne(2), 3);
-    expect(calculator.addOne(-7), -6);
-    expect(calculator.addOne(0), 1);
+  test('Creates UpdaterConfig correctly', () {
+    final config = UpdaterConfig(
+      githubUsername: 'Mans610',
+      githubRepo: 'supperclubApp',
+    );
+    expect(config.githubUsername, 'Mans610');
+    expect(config.githubRepo, 'supperclubApp');
+    expect(config.versionJsonUrl, 'https://raw.githubusercontent.com/Mans610/supperclubApp/main/version.json');
   });
 }

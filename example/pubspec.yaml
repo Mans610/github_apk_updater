@@ -1,0 +1,14 @@
+name: github_apk_updater_example
+description: Example for github_apk_updater
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  github_apk_updater:
+    path: ../

@@ -1,4 +1,13 @@
 // lib/src/updater_config.dart
+import 'package:flutter/material.dart';
+
+import 'update_info.dart';
+
+/// Builder for a completely custom update dialog.
+typedef UpdateDialogBuilder = Widget Function(
+  BuildContext context,
+  UpdateInfo updateInfo,
+);
 
 /// Configuration for GithubApkUpdater.
 ///
@@ -28,8 +37,17 @@ class UpdaterConfig {
   /// Text for the dismiss button (default: 'Later')
   final String laterButtonText;
 
+  /// Text for the skip button (default: 'Skip This Version')
+  final String skipButtonText;
+
   /// Check update on every app launch (default: true)
   final bool checkOnLaunch;
+
+  /// Allow user to skip this specific version forever (default: false)
+  final bool allowSkip;
+
+  /// Optional builder to return a completely custom dialog widget.
+  final UpdateDialogBuilder? dialogBuilder;
 
   /// Built version.json URL — auto-generated, no need to set manually
   String get versionJsonUrl =>
@@ -42,6 +60,9 @@ class UpdaterConfig {
     this.dialogTitle = 'Update Available',
     this.updateButtonText = 'Update Now',
     this.laterButtonText = 'Later',
+    this.skipButtonText = 'Skip This Version',
     this.checkOnLaunch = true,
+    this.allowSkip = false,
+    this.dialogBuilder,
   });
 }

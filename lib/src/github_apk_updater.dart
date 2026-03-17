@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'updater_config.dart';
 import 'update_info.dart';
@@ -28,8 +29,25 @@ class GithubApkUpdater {
     final info = await _fetchUpdateInfo();
     if (info == null) return;
     if (!info.hasUpdate) return;
+
+    if (!info.forceUpdate && config.allowSkip) {
+      final prefs = await SharedPreferences.getInstance();
+      final skippedVersion = prefs.getString('github_apk_updater_skipped_version');
+      if (skippedVersion == info.latestVersion) {
+        return; // User explicitly skipped this update
+      }
+    }
+
     if (context.mounted) {
-      showUpdateDialog(context, info: info, config: config);
+      if (config.dialogBuilder != null) {
+        showDialog(
+          context: context,
+          barrierDismissible: !info.forceUpdate,
+          builder: (ctx) => config.dialogBuilder!(ctx, info),
+        );
+      } else {
+        showUpdateDialog(context, info: info, config: config);
+      }
     }
   }
 
@@ -45,9 +63,9 @@ class GithubApkUpdater {
   /// }
   /// ```
   Future<UpdateInfo?> getUpdateInfo() => _fetchUpdateInfo();
-
+  
   // ─── Internal ─────────────────────────────────────────────────────────────
-
+  
   Future<UpdateInfo?> _fetchUpdateInfo() async {
     try {
       final response = await http

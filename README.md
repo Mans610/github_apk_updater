@@ -1,74 +1,162 @@
 # github_apk_updater
 
-Auto-update your Flutter Android app via GitHub Releases.
+Auto-update your Flutter Android app via GitHub Releases — no server, no third-party service.
 
-**Zero cost. Zero third-party services. Zero server. Fully self-owned.**
+### ✨ Next-Level Features Added in v1.0.6+:
+- **In-App Direct Download**: Downloads the APK silently in the background with a live progress bar without launching the browser!
+- **Auto-Trigger Installation**: Opens Android's native installer the split-second the download finishes.
+- **"Skip This Version" Feature**: Allows your users to hide the dialog until you release the next version.
+- **Smart Semantic Versioning**: Bulletproof version parsing (`pub_semver`) knows `1.22.0` is seamlessly newer than `1.9.0`.
+- **Fully Customizable UI**: Redesigned default UI that matches your app's primary theme color, or supply your own entirely custom Widget via the new `dialogBuilder`.
 
 ---
 
 ## How It Works
 
 ```
-You: git push
-        → GitHub Actions builds APK automatically
-        → Uploads APK to GitHub Releases (free)
-        → Updates version.json on your repo
+You push code to GitHub
+  → GitHub Actions builds APK automatically
+  → Uploads APK to GitHub Releases (free)
+  → Updates version.json
 
-User opens app:
-        → App fetches version.json silently
-        → If newer version → shows update dialog
-        → User taps "Update Now" → downloads & installs
+User opens your app
+  → App checks version.json silently
+  → If new version exists → shows update dialog
+  → User taps Update Now → downloads & installs
 ```
 
 ---
 
-## Setup (4 steps only)
+## ⚠️ Required: Copy Workflow File (Do This First)
 
-### Step 1 — Add to pubspec.yaml
+**Every project using this package needs a GitHub Actions workflow file.**
+Without this file, GitHub will NOT build your APK automatically.
+
+**Step 1 — Create this folder in your project root:**
+```
+your_project/
+└── .github/
+    └── workflows/
+        └── build_apk.yml   ← create this file
+```
+
+**Step 2 — Paste this into `build_apk.yml`:**
+
+```yaml
+name: Build & Release APK
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Get Flutter packages
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Get version from pubspec
+        id: get_version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' ')
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
+          name: v${{ steps.get_version.outputs.VERSION }}
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version.json
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          REPO="${{ github.repository }}"
+          APK_URL="https://github.com/$REPO/releases/download/v$VERSION/app-release.apk"
+          printf '{\n  "latest_version": "%s",\n  "apk_url": "%s",\n  "force_update": false,\n  "release_notes": "New update available!"\n}\n' "$VERSION" "$APK_URL" > version.json
+
+      - name: Commit version.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add version.json
+          git diff --staged --quiet || git commit -m "chore: bump version.json to v${{ steps.get_version.outputs.VERSION }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+**Step 3 — Add `version.json` to your project root:**
+
+```json
+{
+  "latest_version": "1.0.0",
+  "apk_url": "https://github.com/USERNAME/REPO/releases/download/v1.0.0/app-release.apk",
+  "force_update": false,
+  "release_notes": "Initial release."
+}
+```
+
+---
+
+## Install Package
 
 ```yaml
 dependencies:
   github_apk_updater: ^1.0.0
 ```
 
-### Step 2 — Add version.json to your project root
+---
 
-Create a file called `version.json` in your project root:
+## 🔒 Android Permissions (Required)
 
-```json
-{
-  "latest_version": "1.0.0",
-  "apk_url": "https://github.com/YOUR_USERNAME/YOUR_REPO/releases/download/v1.0.0/app-release.apk",
-  "force_update": false,
-  "release_notes": "Initial release."
-}
+To allow the app to actually download and install the APK, you **must** add these permissions to your `android/app/src/main/AndroidManifest.xml` (inside the `<manifest>` tag, right above `<application>`):
+
+```xml
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+<uses-permission android:name="android.permission.INTERNET"/>
 ```
 
-### Step 3 — Copy the GitHub Actions workflow
+---
 
-Copy `github-workflow-template.yml` from this package into your project:
-
-```
-your_project/
-└── .github/
-    └── workflows/
-        └── build_apk.yml   ← paste the template here
-```
-
-### Step 4 — Add updater to your app
+## Add to Your App
 
 ```dart
 import 'package:github_apk_updater/github_apk_updater.dart';
 
-// Create config once (put this somewhere global or in your controller)
 final updater = GithubApkUpdater(
   config: UpdaterConfig(
-    githubUsername: 'YOUR_USERNAME',   // ← your GitHub username
-    githubRepo: 'YOUR_REPO',           // ← your GitHub repo name
+    githubUsername: 'your_username',  // ← your GitHub username
+    githubRepo: 'your_repo',          // ← your GitHub repo name
   ),
 );
 
-// Call in your home screen initState
 @override
 void initState() {
   super.initState();
@@ -78,85 +166,81 @@ void initState() {
 }
 ```
 
-**That's it. Done.**
+---
+
+## Every Push Routine
+
+```bash
+# 1. Bump version in pubspec.yaml
+#    example: 1.0.0+1 → 1.0.1+2
+
+# 2. Push
+git pull --rebase && git add . && git commit -m "update" && git push origin main
+```
 
 ---
 
 ## Configuration Options
 
-```dart
-UpdaterConfig(
-  githubUsername: 'Mans610',          // required
-  githubRepo: 'supperclubApp',        // required
-
-  branch: 'main',                     // optional, default: 'main'
-  dialogTitle: 'Update Available',    // optional
-  updateButtonText: 'Update Now',     // optional
-  laterButtonText: 'Later',           // optional
-)
-```
+| Option | Default | Description |
+|--------|---------|-------------|
+| `githubUsername` | required | Your GitHub username |
+| `githubRepo` | required | Your repository name |
+| `branch` | `main` | Branch with version.json |
+| `dialogTitle` | `Update Available` | Dialog title |
+| `updateButtonText` | `Update Now` | Update button label |
+| `laterButtonText` | `Later` | Dismiss button label |
+| `skipButtonText` | `Skip This Version` | Button label for skipping an update |
+| `allowSkip` | `false` | Shows a "Skip" button. Saves version locally to never show dialog for this version again. |
+| `dialogBuilder` | `null` | Provide a completely custom Widget (e.g. BottomSheet) to display. |
 
 ---
 
 ## Force Update
 
-To force ALL users to update (cannot skip):
-
-Edit `version.json` on GitHub and set:
-```json
-"force_update": true
-```
-
-Users will see the dialog with no "Later" button.
+Set `force_update: true` in `version.json` — users cannot skip the update.
 
 ---
 
-## Advanced — Custom UI
+## Fully Custom UI
 
-If you don't want the built-in dialog:
+Don't like the default popup? You can pass your own completely custom widgets using the `dialogBuilder` in your config!
 
 ```dart
-final info = await updater.getUpdateInfo();
+final updater = GithubApkUpdater(
+  config: UpdaterConfig(
+    githubUsername: 'your_username',
+    githubRepo: 'your_repo',
+    // Supply your own Widget! 
+    dialogBuilder: (BuildContext context, UpdateInfo info) {
+      return AlertDialog(
+        title: Text('Huge Update! v${info.latestVersion}'),
+        content: Text(info.releaseNotes),
+        actions: [
+          TextButton(
+             onPressed: () => Navigator.pop(context), 
+             child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+             // Use our package's built-in URL string to download it yourself, 
+             // or open it however you prefer!
+             onPressed: () => launchUrl(Uri.parse(info.apkUrl)), 
+             child: const Text('Get it now!'),
+          ),
+        ],
+      );
+    },
+  ),
+);
+```
+
+Or just fetch the raw data yourself:
+
+```dart
+final info = await GithubApkUpdater(config: config).getUpdateInfo();
 if (info != null && info.hasUpdate) {
-  // show your own dialog using info.latestVersion, info.apkUrl etc.
+  print(info.latestVersion);
+  print(info.apkUrl);
+  print(info.releaseNotes);
 }
 ```
-
----
-
-## Push Routine
-
-Every time you want to release an update:
-
-```bash
-# 1. Bump version in pubspec.yaml
-#    e.g. version: 1.0.0+1  →  version: 1.0.1+2
-
-# 2. Push
-git pull --rebase && git add . && git commit -m "your message" && git push origin main
-```
-
-GitHub Actions handles everything else. APK is built and users get notified automatically.
-
----
-
-## Cost
-
-| Item | Cost |
-|------|------|
-| GitHub repo + Actions | Free |
-| APK storage (GitHub Releases) | Free |
-| version.json hosting | Free |
-| **Total** | **$0** |
-
----
-
-## Android Permission Required
-
-Add to `android/app/src/main/AndroidManifest.xml`:
-
-```xml
-<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
-```
-
-Users also need to enable **"Install from unknown sources"** once in Android settings. This is normal for apps distributed outside the Play Store.
