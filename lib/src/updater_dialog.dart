@@ -48,7 +48,8 @@ class _UpdateDialogState extends State<_UpdateDialog>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _scaleAnim = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
+    _scaleAnim =
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
     _controller.forward();
   }
 
@@ -134,7 +135,8 @@ class _UpdateDialogState extends State<_UpdateDialog>
       child: ScaleTransition(
         scale: _scaleAnim,
         child: Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           elevation: 0,
           backgroundColor: theme.colorScheme.surface,
           child: Padding(
@@ -185,7 +187,8 @@ class _UpdateDialogState extends State<_UpdateDialog>
                       ),
                       Icon(
                         Icons.arrow_forward_rounded,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       ),
                       _VersionColumn(
                         label: 'New',
@@ -206,8 +209,8 @@ class _UpdateDialogState extends State<_UpdateDialog>
                         info.releaseNotes,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color:
-                              theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                           fontSize: 14,
                           height: 1.4,
                         ),

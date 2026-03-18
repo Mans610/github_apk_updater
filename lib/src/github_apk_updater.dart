@@ -32,7 +32,8 @@ class GithubApkUpdater {
 
     if (!info.forceUpdate && config.allowSkip) {
       final prefs = await SharedPreferences.getInstance();
-      final skippedVersion = prefs.getString('github_apk_updater_skipped_version');
+      final skippedVersion =
+          prefs.getString('github_apk_updater_skipped_version');
       if (skippedVersion == info.latestVersion) {
         return; // User explicitly skipped this update
       }
@@ -63,9 +64,9 @@ class GithubApkUpdater {
   /// }
   /// ```
   Future<UpdateInfo?> getUpdateInfo() => _fetchUpdateInfo();
-  
+
   // ─── Internal ─────────────────────────────────────────────────────────────
-  
+
   Future<UpdateInfo?> _fetchUpdateInfo() async {
     try {
       final response = await http

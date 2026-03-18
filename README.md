@@ -73,6 +73,12 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Cache Debug Keystore for Stable Signatures
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: debug-keystore
+
       - name: Get Flutter packages
         run: flutter pub get
 

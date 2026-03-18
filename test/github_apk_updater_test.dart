@@ -10,6 +10,7 @@ void main() {
     );
     expect(config.githubUsername, 'Mans610');
     expect(config.githubRepo, 'supperclubApp');
-    expect(config.versionJsonUrl, 'https://raw.githubusercontent.com/Mans610/supperclubApp/main/version.json');
+    expect(config.versionJsonUrl,
+        'https://raw.githubusercontent.com/Mans610/supperclubApp/main/version.json');
   });
 }
