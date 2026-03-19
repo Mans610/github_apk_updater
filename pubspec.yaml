@@ -3,7 +3,7 @@ description: >
   Auto-update your Flutter Android app via GitHub Releases.
   Zero cost, zero third-party services, zero server needed.
   Just push to GitHub — users get update dialog automatically.
-version: 1.0.6
+version: 1.0.8
 homepage: https://github.com/Mans610/github_apk_updater
 repository: https://github.com/Mans610/github_apk_updater
 
@@ -15,9 +15,7 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.6.0
-  open_filex: ^4.7.0
   package_info_plus: ^9.0.0
-  path_provider: ^2.1.5
   pub_semver: ^2.2.0
   shared_preferences: ^2.5.4
   url_launcher: ^6.3.2

@@ -1,9 +1,5 @@
 // lib/src/updater_dialog.dart
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -38,8 +34,6 @@ class _UpdateDialogState extends State<_UpdateDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
-  bool _downloading = false;
-  double? _progress;
 
   @override
   void initState() {
@@ -66,61 +60,15 @@ class _UpdateDialogState extends State<_UpdateDialog>
     if (mounted) Navigator.pop(context);
   }
 
-  Future<void> _download() async {
-    setState(() {
-      _downloading = true;
-      _progress = null;
-    });
-
+  Future<void> _launchUpdateUrl() async {
     final uri = Uri.parse(widget.info.apkUrl);
-
-    try {
-      // 1. Get Temporary Directory
-      final dir = await getTemporaryDirectory();
-      final filePath = '${dir.path}/update_${widget.info.latestVersion}.apk';
-      final file = File(filePath);
-
-      // 2. Stream Download
-      final request = http.Request('GET', uri);
-      final response = await http.Client().send(request);
-
-      final totalBytes = response.contentLength ?? 0;
-      int receivedBytes = 0;
-
-      final sink = file.openWrite();
-      await for (final chunk in response.stream) {
-        sink.add(chunk);
-        receivedBytes += chunk.length;
-        if (totalBytes > 0 && mounted) {
-          setState(() {
-            _progress = receivedBytes / totalBytes;
-          });
-        }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (mounted && !widget.info.forceUpdate) {
+        Navigator.pop(context);
       }
-      await sink.close();
-
-      // 3. Open APK for install
-      if (mounted) setState(() => _downloading = false);
-      final result = await OpenFilex.open(filePath);
-
-      // 4. Fallback if OpenFilex fails
-      if (result.type != ResultType.done) {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        }
-      }
-    } catch (e) {
-      debugPrint('[GithubApkUpdater] Download failed: $e');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _downloading = false;
-        _progress = null;
-      });
+    } else {
+      debugPrint('[GithubApkUpdater] Could not launch $uri');
     }
   }
 
@@ -243,7 +191,7 @@ class _UpdateDialogState extends State<_UpdateDialog>
                     ],
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _downloading ? null : _download,
+                        onPressed: _launchUpdateUrl,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           foregroundColor: theme.colorScheme.onPrimary,
@@ -252,39 +200,14 @@ class _UpdateDialogState extends State<_UpdateDialog>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: _downloading
-                            ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(
-                                      value: _progress,
-                                      strokeWidth: 2,
-                                      color: theme.colorScheme.onPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _progress != null
-                                        ? '${(_progress! * 100).toInt()}%'
-                                        : 'Starting...',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Text(
-                                config.updateButtonText,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
+                        child: Text(
+                          config.updateButtonText,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
                   ],

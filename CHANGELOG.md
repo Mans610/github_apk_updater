@@ -1,3 +1,9 @@
+## 1.0.8
+* Reverted to stable browser-based external download and installation flow to ensure maximum device compatibility. Removed `open_filex` and `path_provider` dependencies.
+
+## 1.0.7
+* Fix the issue in inAppUpdate
+
 ## 1.0.6
 * Fixed repository URL mismatch affecting pub.dev package verification
 * Redesigned update dialog with a modern, cleaner UI that adapts perfectly to the app's primary theme color
@@ -24,3 +30,4 @@
 
 ## 1.0.0
 * Initial release
+

@@ -2,9 +2,8 @@
 
 Auto-update your Flutter Android app via GitHub Releases — no server, no third-party service.
 
-### ✨ Next-Level Features Added in v1.0.6+:
-- **In-App Direct Download**: Downloads the APK silently in the background with a live progress bar without launching the browser!
-- **Auto-Trigger Installation**: Opens Android's native installer the split-second the download finishes.
+### ✨ Next-Level Features Added in v1.0.8+:
+- **Streamlined Browser Download**: When users tap update, it opens their browser to download and install the new APK smoothly.
 - **"Skip This Version" Feature**: Allows your users to hide the dialog until you release the next version.
 - **Smart Semantic Versioning**: Bulletproof version parsing (`pub_semver`) knows `1.22.0` is seamlessly newer than `1.9.0`.
 - **Fully Customizable UI**: Redesigned default UI that matches your app's primary theme color, or supply your own entirely custom Widget via the new `dialogBuilder`.
@@ -142,10 +141,9 @@ dependencies:
 
 ## 🔒 Android Permissions (Required)
 
-To allow the app to actually download and install the APK, you **must** add these permissions to your `android/app/src/main/AndroidManifest.xml` (inside the `<manifest>` tag, right above `<application>`):
+To allow the app to check for updates on GitHub, you **must** add this permission to your `android/app/src/main/AndroidManifest.xml` (inside the `<manifest>` tag, right above `<application>`):
 
 ```xml
-<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 <uses-permission android:name="android.permission.INTERNET"/>
 ```
 
