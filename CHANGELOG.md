@@ -1,3 +1,6 @@
+## 1.0.9
+* Fixed "Update Now" button failing to trigger on Android 11+ due to missing intent queries. The URL is now launched unconditionally.
+
 ## 1.0.8
 * Reverted to stable browser-based external download and installation flow to ensure maximum device compatibility. Removed `open_filex` and `path_provider` dependencies.
 

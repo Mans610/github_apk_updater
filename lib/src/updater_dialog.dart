@@ -62,13 +62,13 @@ class _UpdateDialogState extends State<_UpdateDialog>
 
   Future<void> _launchUpdateUrl() async {
     final uri = Uri.parse(widget.info.apkUrl);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (mounted && !widget.info.forceUpdate) {
         Navigator.pop(context);
       }
-    } else {
-      debugPrint('[GithubApkUpdater] Could not launch $uri');
+    } catch (e) {
+      debugPrint('[GithubApkUpdater] Could not launch $uri: $e');
     }
   }
 
